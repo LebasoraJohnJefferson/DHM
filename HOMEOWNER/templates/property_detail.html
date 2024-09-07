@@ -1,0 +1,317 @@
+{% extends 'owner_panel.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {{ user }} / My Property {% endblock title %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+</head>
+
+<body class="bg-gray-100">
+    {% block content %}
+    <p id="user" class="hidden">{{ user }}</p>
+    <!-- Header -->
+    <div class="w-full flex justify-end items-center py-2 px-3 shadow-md bg-white relative">
+        <i id="menuBtn" class="bi bi-list z-[99999] absolute left-3 text-[1.3rem] font-semibold py-0 ml-2 md:hidden"></i>
+        <h1 class="text-left w-full left-[18%] max-[990px]:left-[20%] absolute font-semibold"><i class="bi bi-house"></i> My Property</h1>
+
+        <!--chat notif profile-->
+        <div class="flex items-center font-medium">
+
+			<!--messages-->
+			<a href="{% url 'owner_messages' %}" id="message-button" class="bi bi-chat text-[1.2rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300  relative cursor-pointer z-[9999999]" title="messages">
+				<span id="message-indicator" class="bg-red-600 text-white hidden rounded-full px-1 text-[.7rem]"></span>
+			</a>
+
+			<!--notifications-->
+			<a href="{% url 'owner_notifications' %}" id="notification-bell" class="bi bi-bell text-[1.3rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300 relative cursor-pointer z-[9999999]" title="notifications">
+				<span id="notification-count" class="bg-red-500 rounded-full text-[.7rem] text-white px-1 absolute right-[4px] top-[10%]"></span>
+			</a>
+			<!--end notifications-->
+
+			<!-- PROFILE -->
+			<div class="dropdown w-full text-right">
+				<button id="dropdown-btn" class="btn btn-secondary bg-white border-0 text-black" type="button"
+					data-bs-toggle="dropdown" aria-expanded="false">
+					<div class="w-[2.4rem] h-[2.4rem] rounded-[50%] shadow-md overflow-hidden"><img
+							class="w-full h-full hover:bg-gray-100" src="{{ profile }}" alt="user profile"></div>
+				</button>
+				<ul id="dropdown-menu" class="dropdown-menu">
+					<li>
+						<form class="dropdown-item" action="{% url 'adminLogout' %}" method="post">
+							{% csrf_token %}
+							<button class="w-full text-left" type="submit"><i
+									class="bi bi-box-arrow-right"></i>LOGOUT</button>
+						</form>
+					</li>
+					<li class="w-full">
+						<p class="w-full text-left dropdown-item" type="submit">
+							<i class="bi bi-person-circle"></i>
+							<!-- Button trigger modal -->
+							<a class="" data-bs-toggle="modal" href="#exampleModalToggle" role="button">PROFILE</a>
+						</p>
+					</li>
+				</ul>
+			</div>
+			<span>{{ user }}</span>
+		</div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div class="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title w-full text-center" id="exampleModalToggleLabel">PROFILE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="w-full flex justify-center py-3">
+                        <div class="w-40 h-40 shadow-md rounded-full bg-gray-600 relative">
+                            <img class="w-40 h-40 shadow-md rounded-full object-cover"
+                                src="{{ profile }}" alt="profile pic" srcset="">
+                            <button class="bi bi-pen px-2 py-[.3rem] absolute text-[1.2rem] bottom-[1rem] right-[1rem] rounded-full bg-white shadow-md shadow-gray-600" data-bs-target="#exampleModalToggle2" data-bs-toggle="modal" data-bs-dismiss="modal"></button>
+                        </div>
+                    </div>
+                    <h1 class="w-full text-center text-[2rem]">Hello, {{ user_name }}!</h1>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="exampleModalToggle2" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalToggleLabel2">EDIT PICTURE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="w-full flex justify-center py-3">
+                        <div class="w-40 h-40 shadow-md rounded-full bg-gray-600 relative">
+                            <img id="imagePreview" class="w-40 h-40 shadow-md rounded-full object-cover"
+                                src="{{ profile }}" alt="profile pic" srcset="">
+                            <img id="imagePreview" src="" alt="" class="hidden w-40 h-40 shadow-md rounded-full object-cover">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <form action="{% url 'update_picture' id %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input id="imageUpload" type="file" name="picture" id="picture">
+                        <button type="submit" class="btn btn-primary">SAVE</button>
+                    </form>
+                    <a href="{% url 'household_members' %}" class="btn btn-secondary">CANCEL</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content container -->
+    <div class="w-full md:w-[73%] lg:w-[84.5%] max-[770px]:h-full h-[88%] bg-white absolute md:right-2 top-[4.3rem] md:top-[4.5rem] shadow-md rounded-md p-4 overflow-y-auto overflow-x-hidden ">
+        <div class="flex mb-4">
+            <i onclick="window.history.back()" class="bi bi-arrow-left mr-2 text-[1.2rem] px-[.8rem] flex items-center py-2 rounded-full hover:bg-gray-200 cursor-pointer"></i>
+            <div>
+              <h1 class="text-xl font-medium">Property detail</h1>
+              <p class="text-muted-foreground text-sm">View and manage your property details</p>
+            </div>
+        </div>
+
+        <!-- Property Detail -->
+        {% if not my_property %}
+        <div>
+            <p class="w-full text-center text-[2rem] text-gray-400 mt-4">No property selected yet.</p>
+            <h1 class="w-full text-center text-[5rem]">
+                <i class="bi bi-house-door text-gray-400"></i>
+            </h1>
+            
+            <a href="{% url 'property_selection' %}" class="btn btn-primary absolute top-[50%] left-[50%]" style="transform: translate(-50%, -50%);">Select my property</a>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-lg shadow-md overflow-hidden h-[20rem] relative">
+            <h1 class="text-white absolute py-3 px-3 text-[2rem]">{{ my_property.property_name|title }}</h1>
+            <img src="{{ my_property.photo.url }}" alt="Property Image" class="w-full h-full object-cover">
+            <div class="absolute bottom-0 left-0 py-3 w-full px-3 shadow-md" style="border-image: fill 0 linear-gradient(to top, #242323, #0001)">
+                <table class="text-white">
+                    <tr>
+                        <th>Property name: </th>
+                        <td class="px-3">{{ my_property.property_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Bedroom: </th>
+                        <td class="px-3">{{ my_property.bedroom }}</td>
+                    </tr>
+                    <tr>
+                        <th>Bathroom: </th>
+                        <td class="px-3">{{ my_property.bathroom }}</td>
+                    </tr>
+                    <tr>
+                        <th>Block no: </th>
+                        <td class="px-3">{{ my_property.property_block_no }}</td>
+                    </tr>
+                    <tr>
+                        <th>House no: </th>
+                        <td class="px-3">{{ my_property.property_house_no }}</td>
+                    </tr>
+                    <tr>
+                        <th>Property description: </th>
+                        <td class="px-3">{{ my_property.property_description }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!--Maintenance history-->
+        {% if my_property %}
+        <div class="mt-8">
+            <div class="rounded-lg border bg-card text-card-foreground shadow-sm" data-v0-t="card">
+              <div class="flex p-6 justify-between">
+                <div>
+                    <h3 class="whitespace-nowrap text-2xl font-semibold leading-none tracking-tight">Maintenance Requests</h3>
+                    <p class="text-sm text-muted-foreground">View and manage any issues with your home</p>
+                </div>
+
+                <div>
+                    <a class="text-sm hover:bg-gray-200 py-2 px-4 rounded-lg" href="{% url 'request_maintenance_list' %}"><i class="bi bi-tools"></i> Manage maintenance</a>
+                </div>
+              </div>
+              <div class="p-6">
+                <div class="relative w-full max-h-[20rem] overflow-y-auto">
+                  <table class="w-full caption-bottom text-sm">
+                    <thead class="[&amp;_tr]:border-b">
+                      <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
+                          Issue
+                        </th>
+                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
+                            Location
+                          </th>
+                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
+                          Status
+                        </th>
+                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
+                          Submitted
+                        </th>
+                        <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody class="[&amp;_tr:last-child]:border-0">
+                      {% for maintenance in maintenance_history %}
+                        <tr class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                            <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">{{ maintenance.Description_of_issue }}</td>
+                            <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">{{ maintenance.location }}</td>
+                            <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                                {% if maintenance.status == 'Done' %}
+                                    <div
+                                        class="inline-flex w-fit text-white items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-green-500"
+                                        data-v0-t="badge"> {{ maintenance.status }} </div>
+                                {% elif maintenance.status == 'On going' %}
+                                <div
+                                    class="inline-flex w-fit items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 bg-yellow-500 text-yellow-900"
+                                    data-v0-t="badge"> In Progress </div>
+                                {% else %}
+                                <div
+                                    class="inline-flex w-fit items-center whitespace-nowrap rounded-full border-1 border-gray-300 px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 text-gray-400"
+                                    data-v0-t="badge"> {{ maintenance.status}} </div>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">{{ maintenance.date_requested }}</td>
+                            <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                            <button class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-9 rounded-md px-3">
+                                View
+                            </button>
+                            </td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+    </div>
+    {% endblock content %}
+
+    {% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+	integrity="sha384-ONBsiAlrNpJw8zW/FivQc6No5E0nEyBuNb/aD4sSR/Q8+TF55hS9KN06IwcX0J2i"
+	crossorigin="anonymous"></script>
+<script>
+    var user = document.getElementById("user").innerText.trim();
+			if (user === 'AnonymousUser') {
+				location.href = "{% url 'main' %}";
+			}
+
+	document.getElementById('imageUpload').addEventListener('change', (e) => {
+		const file = e.target.files[0];
+		if (file) {
+			const reader = new FileReader();
+			reader.onload = function (e) {
+				const img = document.getElementById('imagePreview');
+				img.src = e.target.result;
+				img.style.display = 'block';
+			}
+			reader.readAsDataURL(file);
+		}
+	});
+
+    // Store the IDs of notifications that have already been displayed
+		let displayedNotificationIds = new Set();
+
+function fetchNotifications() {
+    $.ajax({
+        url: '{% url "get_notifications" %}',
+        method: 'GET',
+        success: function(data) {
+            const notificationsList = $('#notifications-list');
+            if(data.length != 0){
+                $('#notification-count').text(data.length);
+            }
+
+            data.forEach(function(notification) {
+                // Check if the notification has already been displayed
+                if (!displayedNotificationIds.has(notification.id)) {
+                    // Add new notification to the top
+                    notificationsList.prepend('<p class="py-2 px-1 hover:bg-gray-100 cursor-pointer">' + notification.message + '</p>');
+                    // Add the notification ID to the set of displayed IDs
+                    displayedNotificationIds.add(notification.id);
+                }
+            });
+
+            if (data.length > 0) {
+                $('#notification-bell').addClass('new-notifications');
+            } else {
+                $('#notification-bell').removeClass('new-notifications');
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error fetching notifications:', textStatus, errorThrown);
+        }
+    });
+}
+
+// Polling every 5 seconds
+setInterval(fetchNotifications, 500);
+
+</script>
+{% endblock extra_js %}
+</body>
+
+</html>
+

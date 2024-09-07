@@ -1,0 +1,540 @@
+{% extends 'owner_panel.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {{ user }} / Maintenance requests {% endblock title %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+</head>
+
+<body class="bg-gray-100">
+    {% block content %}
+    <!--Header-->
+    <div class="w-full flex justify-end items-center py-2 px-3 shadow-md bg-gray-50 relative">
+        <i id="menuBtn"
+            class="bi bi-list z-[99999] absolute left-3 text-[1.3rem] font-semibold py-0 ml-2 md:hidden"></i>
+
+        <h1 class="text-left w-full left-[18%] max-[990px]:left-[20%] absolute font-semibold max-w-[6rem]">Maintenance
+            requests
+        </h1>
+
+        <!--chat notif profile-->
+        <div class="flex items-center">
+
+            <!--messages-->
+            <a href="{% url 'owner_messages' %}" id="message-button"
+                class="bi bi-chat text-[1.2rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300  relative cursor-pointer z-[9999999]"
+                title="messages">
+                <span id="message-indicator" class="bg-red-600 text-white hidden rounded-full px-1 text-[.7rem]"></span>
+            </a>
+
+            <!--notifications-->
+            <a href="{% url 'owner_notifications' %}" id="notification-bell"
+                class="bi bi-bell text-[1.3rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300 relative cursor-pointer z-[9999999]"
+                title="notifications">
+                <span id="notification-count"
+                    class="bg-red-500 rounded-full text-[.7rem] text-white px-1 absolute right-[4px] top-[10%]"></span>
+            </a>
+            <!--end notifications-->
+
+            <!-- PROFILE -->
+            <div class="dropdown w-full text-right">
+                <button id="dropdown-btn" class="btn btn-secondary bg-transparent border-0 text-black" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="w-[2.4rem] h-[2.4rem] rounded-[50%] shadow-md overflow-hidden"><img
+                            class="w-full h-full hover:bg-gray-100" src="{{ profile }}" alt="user profile"></div>
+                </button>
+                <ul id="dropdown-menu" class="dropdown-menu">
+                    <li class="w-full">
+                        <p class="w-full text-left dropdown-item" type="submit">
+                            <a href="{% url 'owner_profile' %}"><I class="bi bi-person-circle"></I> PROFILE</a>
+                        </p>
+                    </li>
+                    <li>
+                        <form class="dropdown-item" action="{% url 'adminLogout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="w-full text-left" type="submit"><i class="bi bi-box-arrow-right"></i>
+                                LOGOUT</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+            <span>{{ user }}</span>
+        </div>
+    </div>
+
+    <!--Content container-->
+    <div
+        class="w-full md:w-[73%] lg:w-[84.5%] max-[770px]:h-full h-[88%] bg-white absolute md:right-2 top-[4.3rem] md:top-[4.5rem] shadow-md rounded-md p-4 overflow-y-auto overflow-x-hidden ">
+
+        {% for message in messages %}
+			<p id="pop-up-mess" class="alert alert-success absolute py-3 border-none bg-white shadow-md text-black"><i class="bi bi-check-circle-fill text-green-600"></i> {{ message }}</p>
+		{% endfor %}
+
+        <div class="flex mb-4">
+
+            <a href="{% url 'owner_dashboard' %}"
+                class="bi bi-arrow-left mr-2 text-[1.2rem] px-[.8rem] flex items-center py-2 rounded-full hover:bg-gray-200 cursor-pointer"></a>
+            <div>
+                <h1 class="text-xl font-medium">Maintenance requests</h1>
+                <p class="text-muted-foreground text-sm">View and manage your maintenance requests</p>
+            </div>
+        </div>
+
+        <!-- Search input -->
+        <div class="mb-2 flex gap-2 items-center">
+            <button data-bs-toggle="modal" data-bs-target="#staticBackdrop"
+                class="btn btn-primary shadow-gray-500 shadow-md max-[770px]:rounded-full"><i
+                    class="bi bi-plus font-semibold"></i> <span class="hidden min-[770px]:inline"></span></button>
+            <input type="text" id="searchInput" class="form-control" placeholder="Search for maintenance..."> <i
+                id="filterBtn"
+                class="bi bi-filter cursor-pointer hover:bg-gray-200 text-[1.5rem] px-2 bg-gray-100 shadow-md"></i>
+        </div>
+
+        <!-- Filters -->
+        <div id="filterContainer"
+            class="flex flex-col gap-2 mb-2 h-full shadow-md shadow-gray-600 bg-white absolute right-[-100%] top-0 w-[25%] max-[770px]:w-[50%] z-[999] px-3 overflow-y-scroll">
+            <h1 class="w-full py-2 text-[1.5rem] justify-between flex items-center ">Filtration <i id="filterCloseBtn"
+                    class="bi bi-x absolute right-3 cursor-pointer"></i></h1>
+            <div>
+                <label for="typeFilter" class="form-label">Type of issue</label>
+                <select id="typeFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="plumbing">Plumbing</option>
+                    <option value="electrical">Electrical</option>
+                </select>
+            </div>
+            <div>
+                <label for="statusFilter" class="form-label">Status</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="done">Done</option>
+                    <option value="ongoing">On going</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[350px] overflow-y-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="sticky top-0 bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Description of issue</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Type of issue</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Location</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Status</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date
+                        </th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Action</th>
+                    </tr>
+                </thead>
+                <tbody id="membersTable" class="bg-white divide-y divide-gray-200">
+                    {% for request in page_obj %}
+                    <tr>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ request.Description_of_issue }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ request.type_of_issue }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ request.location }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            {% if request.status == 'Done'%}
+                            <p class="bg-green-600 text-white px-1 rounded-[3rem] text-center">{{ request.status }}</p>
+                            {% elif request.status == 'On going' %}
+                            <p class="bg-orange-500 text-white px-1 rounded-[3rem] text-center">{{ request.status }}</p>
+                            {% elif request.status == 'notverified' %}
+                            <p class="bg-red-500 text-white px-1 rounded-[3rem] text-center">{{ request.status }}</p>
+                            {% elif request.status == 'verified' %}
+                            <p class="bg-green-500 text-white px-1 rounded-[3rem] text-center">{{ request.status }}</p>
+                            {% else %}
+                            <p class="border-1 border-gray-300 text-gray-500 px-1 rounded-[3rem] text-center">{{ request.status }}</p>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ request.date_requested }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            <!--ellipsis-->
+                            <button class="w-full hover:bg-gray-200 rounded-full py-2" data-bs-toggle="dropdown"
+                                aria-expanded="false"><i class="bi bi-three-dots"></i></button>
+                            <ul class="dropdown-menu">
+
+                                {% if request.status == 'Pending' %}
+                                <!--edit button for modal-->
+                                <li>
+                                    <button type="button" class="dropdown-item text-blue-500" data-bs-toggle="modal"
+                                        data-bs-target="#editModal{{ request.pk }}">
+                                        <i class="bi bi-pen-fill"></i> UPDATE
+                                    </button>
+                                </li>
+                                {% endif %}
+
+
+                                <!--delete button for modal-->
+                                <li>
+                                    <button type="button" class="dropdown-item text-red-500" data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal{{ request.pk}}">
+                                        <i class="bi bi-trash-fill"></i> DELETE
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- Modal for edit-->
+                            <div class="modal fade z-[99999999]" id="editModal{{ request.pk}}" tabindex="-1"
+                                aria-labelledby="editModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editModalLabel{{ request.pk}}">Edit {{ request.Description_of_issue }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <form method="post" action="{% url 'edit_request' request.pk %}">
+                                                {% csrf_token %}
+                                                <div class="mb-3">
+                                                    <label for="description" class="form-label">Description of issue</label>
+                                                    <input type="text" class="form-control" name="description"
+                                                        id="first_name" value="{{ request.Description_of_issue }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="type_of_issue" class="form-label">Type of issue</label>
+                                                    <input type="text" class="form-control" name="type_of_issue"
+                                                        id="last_name" value="{{ request.type_of_issue}}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="location" class="form-label">Location</label>
+                                                    <input type="text" class="form-control" name="location" id="location"
+                                                        value="{{ request.location }}" required>
+                                                </div>
+                                                
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Save changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--End modal for edit-->
+
+                            <!-- Modal for delete-->
+                            <div class="modal fade" id="deleteModal{{ request.pk}}" tabindex="-1"
+                                aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title w-full text-center font-semibold"
+                                                id="deleteModalLabel{{ resident.pk}}">Delete "{{ request.Description_of_issue }}" ?
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <h1 class="w-full text-center">
+                                                <i class="bi bi-x-circle text-[5rem] text-red-500"></i>
+                                            </h1>
+                                            <h1 class="w-full text-center">Are you sure you want to delete request "{{ request.Description_of_issue }}"?</h1>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{% url 'delete_request' request.pk %}" method="post">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--END modal for delete-->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!--pagination-->
+        <div class="py-2">
+            <nav class="block">
+                <p>Showing {{ page_obj.end_index }} out of {{ paginator.count }} results</p>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %} <li class="page-item"><a
+                            class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item opacity-[.5] pointer-events-none">
+                            <a class="page-link" href="" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item opacity-[.5] pointer-events-none">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+        </div>
+        <div id="noResults" class="hidden w-full text-center">
+            <div class="">
+                <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: gray;"></i>
+                <p class="mt-2 text-gray-600">No Results Found</p>
+            </div>
+        </div>
+
+        <!--Modal form for request maintenance-->
+		<div class="modal fade z-[9999999]" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="staticBackdropLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="staticBackdropLabel">Send a request</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+
+                    <form action="{% url 'maintenance_request' %}" method="post">
+                        {% csrf_token %}
+
+                        <div class="w-full py-3 flex justify-center">
+                            <img src="{% static 'users/req_maintenance.jpg' %}" class="w-[50%] h-[50%]"
+                                alt="erquest maintenance image" srcset="">
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="description_of_issue" class="form-label">Description of issue</label>
+                            <input class="form-control" list="description" id="description_of_issue" name="description_of_issue" required>
+                            <datalist id="description">
+                                    <option value="leaky faucet"></option>
+                                    <option value="Clogged drain"></option>
+                                    <option value="Broken window"></option>
+                                    <option value="Power outage in room"></option>
+                                    <option value="Air conditioning not working"></option>
+                                    <option value="Heater malfunction"></option>
+                                    <option value="Door lock issue"></option>
+                                    <option value="Pest infestation"></option>
+                                    <option value="Water heater problem"></option>
+                                    <option value="Roof leak"></option>
+                                    <option value="Broken bed"></option>
+                            </datalist>
+                        </div>
+                        <div class="mb-2">
+                            <label for="type_of_issue" class="form-label">Type of issue</label>
+                            <select class="form-control" name="type_of_issue" id="type_of_issue" required>
+                                <option value="" selected>-----</option>
+                                <option value="plumbing">Plumbing</option>
+                                <option value="electrical">Electrical</option>
+                                <option value="appliance">Appliance repair</option>
+                                <option value="appliance">HVAC (Heating, Ventilation and Air Conditioning)</option>
+                                <option value="appliance">Carpentry</option>
+                                <option value="appliance">Pest control</option>
+                                <option value="appliance">Landscaping</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label for="location_of_issue" class="form-label">Location</label>
+                            <input class="form-control" list="locations" name="location_of_issue" placeholder="Specify the area (e.g., bathroom, kitchen)" required>
+
+                            <datalist id="locations">
+                                <option value="Kitchen"></option>
+                                <option value="Bathroom"></option>
+                                <option value="Living room"></option>
+                                <option value="Bedroom"></option>
+                                <option value="Garage"></option>
+                                <option value="Basement"></option>
+                                <option value="Attic"></option>
+                                <option value="Roof"></option>
+                                <option value="Backyard"></option>
+                                <option value="Front yard"></option>
+                                <option value="Hallway"></option>
+                                <option value="Laundry room"></option>
+                                <option value="Comfort room / cr"></option>
+                            </datalist>
+                        </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send request</button>
+                </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!--end request modal-->
+
+    </div>
+    {% endblock content %}
+
+    {% block extra_js %}
+    <link rel="stylesheet" href="{% static 'css/pop-up-mess.css' %}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ONBsiAlrNpJw8zW/FivQc6No5E0nEyBuNb/aD4sSR/Q8+TF55hS9KN06IwcX0J2i"
+        crossorigin="anonymous"></script>
+    <script>
+        // Highlight search text in table cells
+        function highlight(text) {
+            if (!text) return;
+            const regex = new RegExp(`(${text})`, 'gi');
+            $('tbody tr').each(function () {
+                $(this).find('td').each(function () {
+                    $(this).html($(this).text().replace(regex, `<span class="bg-yellow-200">$1</span>`));
+                });
+            });
+        }
+
+        // Filter table rows
+        function filterTable() {
+            const searchText = $('#searchInput').val().toLowerCase();
+            const typeFilter = $('#typeFilter').val();
+            const statusFilter = $('#statusFilter').val();
+            let hasResults = false;
+
+            $('tbody tr').each(function () {
+                const text = $(this).text().toLowerCase();
+                const type = $(this).find('td').eq(7).text().toLowerCase();
+                const status = $(this).find('td').eq(9).text().toLowerCase();
+
+                const isVisible = text.includes(searchText) &&
+                    (typeFilter === '' || type === typeFilter) &&
+                    (statusFilter === '' || status === statusFilter)
+
+                $(this).toggle(isVisible);
+
+                if (isVisible) {
+                    hasResults = true;
+                }
+            });
+
+            // Show or hide the no results message
+            if (!hasResults) {
+                $('#noResults').show();
+            } else {
+                $('#noResults').hide();
+            }
+
+            highlight(searchText);
+        }
+        $('#searchInput').on('input', filterTable);
+        $('#genderFilter, #civilStatusFilter, #religionFilter, #pwdFilter, #pregnantFilter, #relationFilter, #educationFilter').on('change', filterTable);
+
+        //for opening filtration
+        const filterContainer = document.querySelector('#filterContainer')
+        const filterBtn = document.querySelector("#filterBtn")
+        filterBtn.addEventListener('click', (e) => {
+            filterContainer.style.transition = '.4s linear'
+            filterContainer.style.right = '0'
+        })
+
+        function closeFilter() {
+            filterContainer.style.transition = '.4s linear'
+            filterContainer.style.right = '-100%'
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!filterContainer.contains(e.target) && !filterBtn.contains(e.target)) {
+                closeFilter()
+            }
+        })
+
+        const filterCloseBtn = document.querySelector("#filterCloseBtn").addEventListener('click', (e) => {
+            closeFilter()
+        })
+
+
+        document.getElementById('imageUpload').addEventListener('change', (e) => {
+            const file = event.target.files[0]
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block'
+                }
+                reader.readAsDataURL(file);
+            }
+        })
+
+        // Store the IDs of notifications that have already been displayed
+        let displayedNotificationIds = new Set();
+
+        function fetchNotifications() {
+            $.ajax({
+                url: '{% url "get_notifications" %}',
+                method: 'GET',
+                success: function (data) {
+                    const notificationsList = $('#notifications-list');
+                    if (data.length != 0) {
+                        $('#notification-count').text(data.length);
+                    }
+
+                    data.forEach(function (notification) {
+                        // Check if the notification has already been displayed
+                        if (!displayedNotificationIds.has(notification.id)) {
+                            // Add new notification to the top
+                            notificationsList.prepend('<p class="py-2 px-1 hover:bg-gray-100 cursor-pointer">' + notification.message + '</p>');
+                            // Add the notification ID to the set of displayed IDs
+                            displayedNotificationIds.add(notification.id);
+                        }
+                    });
+
+                    if (data.length > 0) {
+                        $('#notification-bell').addClass('new-notifications');
+                    } else {
+                        $('#notification-bell').removeClass('new-notifications');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Error fetching notifications:', textStatus, errorThrown);
+                }
+            });
+        }
+
+        // Polling every 5 seconds
+        setInterval(fetchNotifications, 500);
+    </script>
+    {% endblock extra_js %}
+</body>
+
+</html>

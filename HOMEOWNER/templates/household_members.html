@@ -1,0 +1,675 @@
+{% extends 'owner_panel.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {{ user }} / Household members {% endblock title %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+</head>
+
+<body class="bg-gray-100">
+    {% block content %}
+    <link rel="stylesheet" href="{% static 'css/pop-up-mess.css' %}">
+
+    <!--Header-->
+    <div class="w-full flex justify-end items-center py-2 px-3 shadow-md bg-white relative">
+        <i id="menuBtn"
+            class="bi bi-list z-[99999] absolute left-3 text-[1.3rem] font-semibold py-0 ml-2 md:hidden"></i>
+
+        <h1 class="text-left w-full left-[18%] absolute font-semibold max-[550px]:max-w-[6rem]"> HOUSEHOLD MEMBER
+        </h1>
+
+        <!--chat notif profile-->
+        <div class="flex items-center">
+
+            <!--messages-->
+            <a href="{% url 'owner_messages' %}" id="message-button"
+                class="bi bi-chat text-[1.2rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300  relative cursor-pointer z-[9999999]"
+                title="messages">
+                <span id="message-indicator" class="bg-red-600 text-white hidden rounded-full px-1 text-[.7rem]"></span>
+            </a>
+
+            <!--notifications-->
+            <a href="{% url 'owner_notifications' %}" id="notification-bell"
+                class="bi bi-bell text-[1.3rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300 relative cursor-pointer z-[9999999]"
+                title="notifications">
+                <span id="notification-count"
+                    class="bg-red-500 rounded-full text-[.7rem] text-white px-1 absolute right-[4px] top-[10%]"></span>
+            </a>
+            <!--end notifications-->
+
+            <!-- PROFILE -->
+            <div class="dropdown w-full text-right">
+                <button id="dropdown-btn" class="btn btn-secondary bg-white border-0 text-black" type="button"
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="w-[2.4rem] h-[2.4rem] rounded-[50%] shadow-md overflow-hidden"><img
+                            class="w-full h-full hover:bg-gray-100" src="{{ profile }}" alt="user profile"></div>
+                </button>
+                <ul id="dropdown-menu" class="dropdown-menu">
+                    <li class="w-full">
+                        <p class="w-full text-left dropdown-item" type="submit">
+                            <a href="{% url 'owner_profile' %}"><I class="bi bi-person-circle"></I> PROFILE</a>
+                        </p>
+                    </li>
+                    <li>
+                        <form class="dropdown-item" action="{% url 'adminLogout' %}" method="post">
+                            {% csrf_token %}
+                            <button class="w-full text-left" type="submit"><i class="bi bi-box-arrow-right"></i>
+                                LOGOUT</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+            <span>{{ user }}</span>
+        </div>
+    </div>
+
+    <!--PROFILE MODAL-->
+    <div class="modal fade" id="exampleModalToggle" aria-hidden="true" aria-labelledby="exampleModalToggleLabel"
+        tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title w-full text-center" id="exampleModalToggleLabel">PROFILE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="w-full flex justify-center py-3">
+                        <div class="w-40 h-40 shadow-md rounded-full bg-gray-600 relative">
+                            <img class="w-40 h-40 shadow-md rounded-full object-cover" src="{{ profile }}"
+                                alt="profile pic" srcset="">
+                            <button
+                                class="bi bi-pen px-2 py-[.3rem] absolute text-[1.2rem] bottom-[1rem] right-[1rem] rounded-full bg-white shadow-md shadow-gray-600"
+                                data-bs-target="#exampleModalToggle2" data-bs-toggle="modal"
+                                data-bs-dismiss="modal"></button>
+                        </div>
+                    </div>
+                    <h1 class="w-full text-center text-[2rem]">Hello, {{ request.user }}!</h1>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="exampleModalToggle2" aria-hidden="true" aria-labelledby="exampleModalToggleLabel2"
+        tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalToggleLabel2">EDIT PICTURE</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="w-full flex justify-center py-3">
+                        <div class="w-40 h-40 shadow-md rounded-full bg-gray-600 relative">
+                            <img id="imagePreview" class="w-40 h-40 shadow-md rounded-full object-cover"
+                                src="{{ profile }}" alt="profile pic" srcset="">
+                            <img id="imagePreview" src="" alt=""
+                                class="hidden w-40 h-40 shadow-md rounded-full object-cover">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <form action="{% url 'update_picture' id %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input id="imageUpload" type="file" name="picture" id="picture">
+                        <button type="submit" class="btn btn-primary">SAVE</button>
+                    </form>
+                    <a href="{% url 'household_members' %}" class="btn btn-secondary">CANCEL</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!--Content container-->
+    <div
+        class="w-full md:w-[73%] lg:w-[84.5%] max-[770px]:h-full h-[88%] bg-white absolute md:right-2 top-[4.3rem] md:top-[4.5rem] shadow-md rounded-md p-4 overflow-y-auto overflow-x-hidden ">
+
+        {% for message in messages %}
+        <p id="pop-up-mess" class="alert alert-success absolute py-3 border-none bg-white shadow-md text-black"><i
+                class="bi bi-check-circle-fill text-green-600"></i> {{ message }}</p>
+        {% endfor %}
+
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex mb-2">
+                <a href="{% url 'owner_dashboard' %}"
+                    class="bi bi-arrow-left mr-2 text-[1.2rem] px-[.8rem] flex items-center py-2 rounded-full hover:bg-gray-200 cursor-pointer"></a>
+                <div>
+                    <h1 class="text-xl font-medium">Household members</h1>
+                    <p class="text-muted-foreground text-sm">Manage your household members</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search input -->
+        <div class="mb-2 flex gap-2 items-center">
+            <a href="{% url 'add_member' %}"
+                class="btn btn-primary shadow-gray-500 shadow-md max-[770px]:rounded-full"><i
+                    class="bi bi-plus font-semibold"></i> <span class="hidden min-[770px]:inline"></span></a>
+            <input type="text" id="searchInput" class="form-control" placeholder="Search for household members...">
+            <i id="filterBtn"
+                class="bi bi-filter cursor-pointer hover:bg-gray-200 text-[1.5rem] px-2 bg-gray-100 shadow-md"></i>
+        </div>
+
+        <!-- Filters -->
+        <div id="filterContainer"
+            class="grid grid-cols-1 gap-2 mb-2 h-full shadow-md shadow-gray-600 bg-white absolute right-[-100%] top-0 w-[25%] max-[770px]:w-[50%] z-[999] px-3 overflow-y-scroll">
+            <h1 class="w-full py-2 text-[1.5rem] justify-between flex items-center ">Filtration <i id="filterCloseBtn"
+                    class="bi bi-x absolute right-3 cursor-pointer"></i></h1>
+            <div>
+                <label for="genderFilter" class="form-label">Gender</label>
+                <select id="genderFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                </select>
+            </div>
+            <div>
+                <label for="civilStatusFilter" class="form-label">Civil Status</label>
+                <select id="civilStatusFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="single">Single</option>
+                    <option value="married">Married</option>
+                    <option value="widowed">Widowed</option>
+                    <option value="divorced">Divorced</option>
+                </select>
+            </div>
+            <div>
+                <label for="religionFilter" class="form-label">Religion</label>
+                <select id="religionFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="roman catholic">Roman Catholic</option>
+                    <option value="iglesia ni cristo">Iglesia ni Cristo</option>
+                    <option value="born again">Born Again</option>
+                    <option value="christian">Christian</option>
+                </select>
+            </div>
+            <div>
+                <label for="pwdFilter" class="form-label">PWD</label>
+                <select id="pwdFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div>
+                <label for="pregnantFilter" class="form-label">Pregnant</label>
+                <select id="pregnantFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            <div>
+                <label for="relationFilter" class="form-label">Relation</label>
+                <select id="relationFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="father">Father</option>
+                    <option value="mother">Mother</option>
+                    <option value="son">Son</option>
+                    <option value="daughter">Daughter</option>
+                </select>
+            </div>
+            <div>
+                <label for="educationFilter" class="form-label">Education</label>
+                <select id="educationFilter" class="form-select">
+                    <option value="">All</option>
+                    <option value="elementary">Elementary</option>
+                    <option value="highschool">Highschool</option>
+                    <option value="college">College</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[350px] overflow-y-auto">
+            {% if page_obj.count == 0 %}
+            <p class="w-full text-center text-[5rem] text-gray-500"><i class="bi bi-person-dash"></i> </p>
+            {% endif %}
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="sticky top-0 bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Firstname</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Lastname</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date
+                            of birth</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Age
+                        </th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email
+                            address</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Contact
+                            number</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Gender</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Relation to household</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Occupation</th>
+                        <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Action</th>
+                    </tr>
+                </thead>
+                <tbody id="membersTable" class="bg-white divide-y divide-gray-200">
+                    {% for resident in page_obj %}
+                    <tr>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.first_name }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.last_name }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.date_of_birth }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.age }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.email_address }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.contact_number }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.gender }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.relationship_to_household }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">{{ resident.occupation }}</td>
+                        <td class="px-4 py-2 whitespace-nowrap">
+                            <!--ellipsis-->
+                            <button class="w-full hover:bg-gray-200 rounded-full py-2" data-bs-toggle="dropdown"
+                                aria-expanded="false"><i class="bi bi-three-dots"></i></button>
+                            <ul class="dropdown-menu">
+
+                                <!--view button for modal-->
+                                <li>
+                                    <button type="button" class="dropdown-item text-blue-500" data-bs-toggle="modal"
+                                        data-bs-target="#viewModal{{ resident.pk}}">
+                                        <i class="bi bi-eye-fill"></i> VIEW
+                                    </button>
+                                </li>
+
+                                <!--edit button for modal-->
+                                <li>
+                                    <button type="button" class="dropdown-item text-green-500" data-bs-toggle="modal"
+                                        data-bs-target="#editModal{{ resident.pk}}">
+                                        <i class="bi bi-pen-fill"></i> UPDATE
+                                    </button>
+                                </li>
+
+
+                                <!--delete button for modal-->
+                                <li>
+                                    <button type="button" class="dropdown-item text-red-500" data-bs-toggle="modal"
+                                        data-bs-target="#deleteModal{{ resident.pk}}">
+                                        <i class="bi bi-trash-fill"></i> DELETE
+                                    </button>
+                                </li>
+                            </ul>
+
+                            <!-- View Modal -->
+                            <div class="modal fade" id="viewModal{{ resident.pk}}" tabindex="-1"
+                                aria-labelledby="viewModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title w-full text-center font-semibold"
+                                                id="viewModalLabel{{ resident.pk}}">View {{ resident.first_name}}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+
+                                            <!--Other info-->
+                                            <div class="w-full py-3 flex justify-center overflow-y-auto max-h-[400px]">
+                                                <table class="w-[80%]">
+                                                    <tr>
+                                                        <th class="py-2">Name</th>
+                                                        <td>{{ resident.first_name }} {{ resident.last_name }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="py-2">Email address</th>
+                                                        <td>{{ resident.email_address }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="py-2">Contact no</th>
+                                                        <td>{{ resident.contact_number }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="py-2">Gender</th>
+                                                        <td>{{ resident.gender }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="py-2">Occupation</th>
+                                                        <td>{{ resident.occupation }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th class="py-2">Relation to household</th>
+                                                        <td>{{ resident.relationship_to_household }}</td>
+                                                    </tr>
+                                                </table>
+                                            </div>
+
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--End modal for view-->
+
+
+                            <!-- Modal for edit-->
+                            <div class="modal fade" id="editModal{{ resident.pk}}" tabindex="-1"
+                                aria-labelledby="editModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editModalLabel{{ resident.pk}}">Edit {{ resident.first_name }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <!-- Replace with actual edit form -->
+                                            <form method="post" action="{% url 'edit_member' resident.pk %}">
+                                                {% csrf_token %}
+                                                <div class="mb-3">
+                                                    <label for="first_name" class="form-label">Firstname</label>
+                                                    <input type="text" class="form-control" name="first_name"
+                                                        id="first_name" value="{{ resident.first_name }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="last_name" class="form-label">Lastname</label>
+                                                    <input type="text" class="form-control" name="last_name"
+                                                        id="last_name" value="{{ resident.last_name}}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="last_name" class="form-label">Age</label>
+                                                    <input type="number" class="form-control" name="age" id="age"
+                                                        value="{{ resident.age}}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="last_name" class="form-label">Gender</label>
+                                                    <input type="text" class="form-control" name="gender" id="last_name"
+                                                        value="{{ resident.gender}}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="contact_number" class="form-label">Contact no</label>
+                                                    <input type="number" class="form-control" name="contact_number"
+                                                        id="contact_number" value="{{ resident.contact_number}}"
+                                                        required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="email_address" class="form-label">Email address</label>
+                                                    <input type="email" class="form-control" name="email_address"
+                                                        id="email" value="{{ resident.email_address }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="email_address" class="form-label">Occupation</label>
+                                                    <input type="text" class="form-control" name="occupation"
+                                                        id="pccupation" value="{{ resident.occupation }}" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="email_address" class="form-label">Relation to
+                                                        household</label>
+                                                    <input type="text" class="form-control"
+                                                        name="relationship_to_household" id=""
+                                                        value="{{ resident.relationship_to_household }}" required>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-primary">Save changes</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--End modal for edit-->
+
+                            <!-- Modal for delete-->
+                            <div class="modal fade" id="deleteModal{{ resident.pk}}" tabindex="-1"
+                                aria-labelledby="deleteModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title w-full text-center font-semibold"
+                                                id="deleteModalLabel{{ resident.pk}}">Delete {{ resident.first_name }} ?
+                                            </h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <h1 class="w-full text-center">
+                                                <i class="bi bi-x-circle text-[5rem] text-red-500"></i>
+                                            </h1>
+                                            <h1 class="w-full text-center">Are you sure you want to delete member "{{
+                                                resident.first_name }}"?</h1>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{% url 'delete_member' resident.pk %}" method="post">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--END modal for delete-->
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <!--pagination-->
+        <div class="py-2">
+            <nav class="block">
+                <p class="text-sm text-gray-500">Showing {{ page_obj.end_index }} out of {{ paginator.count }} results
+                </p>
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                    {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %} <li class="page-item"><a
+                            class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item opacity-[.5] pointer-events-none">
+                            <a class="page-link" href="" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item opacity-[.5] pointer-events-none">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                </ul>
+            </nav>
+        </div>
+        <div id="noResults" class="hidden w-full text-center">
+            <div class="">
+                <i class="bi bi-exclamation-circle" style="font-size: 3rem; color: gray;"></i>
+                <p class="mt-2 text-gray-600">No Results Found</p>
+            </div>
+        </div>
+
+    </div>
+    {% endblock content %}
+
+    {% block extra_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ONBsiAlrNpJw8zW/FivQc6No5E0nEyBuNb/aD4sSR/Q8+TF55hS9KN06IwcX0J2i"
+        crossorigin="anonymous"></script>
+    <script>
+        // Highlight search text in table cells
+        function highlight(text) {
+            if (!text) return;
+            const regex = new RegExp(`(${text})`, 'gi');
+            $('tbody tr').each(function () {
+                $(this).find('td').each(function () {
+                    $(this).html($(this).text().replace(regex, `<span class="bg-yellow-200">$1</span>`));
+                });
+            });
+        }
+
+        // Filter table rows
+        function filterTable() {
+            const searchText = $('#searchInput').val().toLowerCase();
+            const genderFilter = $('#genderFilter').val();
+            const civilStatusFilter = $('#civilStatusFilter').val();
+            const religionFilter = $('#religionFilter').val();
+            const pwdFilter = $('#pwdFilter').val();
+            const pregnantFilter = $('#pregnantFilter').val();
+            const relationFilter = $('#relationFilter').val();
+            const educationFilter = $('#educationFilter').val();
+
+            let hasResults = false;
+
+            $('tbody tr').each(function () {
+                const text = $(this).text().toLowerCase();
+                const gender = $(this).find('td').eq(7).text().toLowerCase();
+                const civilStatus = $(this).find('td').eq(9).text().toLowerCase();
+                const religion = $(this).find('td').eq(10).text().toLowerCase();
+                const pwd = $(this).find('td').eq(11).text().toLowerCase();
+                const pregnant = $(this).find('td').eq(12).text().toLowerCase();
+                const relation = $(this).find('td').eq(13).text().toLowerCase();
+                const education = $(this).find('td').eq(15).text().toLowerCase();
+
+                const isVisible = text.includes(searchText) &&
+                    (genderFilter === '' || gender === genderFilter) &&
+                    (civilStatusFilter === '' || civilStatus === civilStatusFilter) &&
+                    (religionFilter === '' || religion === religionFilter) &&
+                    (pwdFilter === '' || pwd === pwdFilter) &&
+                    (pregnantFilter === '' || pregnant === pregnantFilter) &&
+                    (relationFilter === '' || relation === relationFilter) &&
+                    (educationFilter === '' || education === educationFilter);
+
+                $(this).toggle(isVisible);
+
+                if (isVisible) {
+                    hasResults = true;
+                }
+            });
+
+            // Show or hide the no results message
+            if (!hasResults) {
+                $('#noResults').show();
+            } else {
+                $('#noResults').hide();
+            }
+
+            highlight(searchText);
+        }
+        $('#searchInput').on('input', filterTable);
+        $('#genderFilter, #civilStatusFilter, #religionFilter, #pwdFilter, #pregnantFilter, #relationFilter, #educationFilter').on('change', filterTable);
+
+        //for opening filtration
+        const filterContainer = document.querySelector('#filterContainer')
+        const filterBtn = document.querySelector("#filterBtn")
+        filterBtn.addEventListener('click', (e) => {
+            filterContainer.style.transition = '.4s linear'
+            filterContainer.style.right = '0'
+        })
+
+        function closeFilter() {
+            filterContainer.style.transition = '.4s linear'
+            filterContainer.style.right = '-100%'
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!filterContainer.contains(e.target) && !filterBtn.contains(e.target)) {
+                closeFilter()
+            }
+        })
+
+        const filterCloseBtn = document.querySelector("#filterCloseBtn").addEventListener('click', (e) => {
+            closeFilter()
+        })
+
+
+        document.getElementById('imageUpload').addEventListener('change', (e) => {
+            const file = event.target.files[0]
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    const img = document.getElementById('imagePreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block'
+                }
+                reader.readAsDataURL(file);
+            }
+        })
+
+        // Store the IDs of notifications that have already been displayed
+        let displayedNotificationIds = new Set();
+
+        function fetchNotifications() {
+            $.ajax({
+                url: '{% url "get_notifications" %}',
+                method: 'GET',
+                success: function (data) {
+                    const notificationsList = $('#notifications-list');
+                    if (data.length != 0) {
+                        $('#notification-count').text(data.length);
+                    }
+
+                    data.forEach(function (notification) {
+                        // Check if the notification has already been displayed
+                        if (!displayedNotificationIds.has(notification.id)) {
+                            // Add new notification to the top
+                            notificationsList.prepend('<p class="py-2 px-1 hover:bg-gray-100 cursor-pointer">' + notification.message + '</p>');
+                            // Add the notification ID to the set of displayed IDs
+                            displayedNotificationIds.add(notification.id);
+                        }
+                    });
+
+                    if (data.length > 0) {
+                        $('#notification-bell').addClass('new-notifications');
+                    } else {
+                        $('#notification-bell').removeClass('new-notifications');
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.error('Error fetching notifications:', textStatus, errorThrown);
+                }
+            });
+        }
+
+        // Polling every 5 seconds
+        setInterval(fetchNotifications, 500);
+    </script>
+    {% endblock extra_js %}
+</body>
+
+</html>

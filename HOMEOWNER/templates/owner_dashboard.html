@@ -1,0 +1,552 @@
+{% extends 'owner_panel.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>{% block title %} {{ user }} / Dashboard {% endblock title %}</title>
+	<script src="https://cdn.tailwindcss.com"></script>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+		integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script src="https://js.pusher.com/7.0/pusher.min.js"></script>
+</head>
+
+<body class="bg-gray-100 h-[100dvh] w-[100dvw] relative">
+	{% block content %}
+	<link rel="stylesheet" href="{% static 'css/pop-up-mess.css' %}">
+
+	<!--pre loader-->
+	<div id="pre-loader" class="w-full bg-white h-full flex justify-center items-center absolute top-0 left-0 z-[99999999]">
+		<img src="{% static 'Pulse@1x-0.7s-200px-200px.gif' %}" class="h-[4rem] w-[4rem]" alt="" srcset="">
+	</div>
+
+	<p id="user" class="hidden">{{ user }}</p>
+	<!-- Header -->
+    <div class="w-full flex justify-end items-center py-2 px-3 shadow-md bg-gray-50 relative">
+        <i id="menuBtn" class="bi bi-list z-[99999] absolute left-3 text-[1.3rem] font-semibold py-0 ml-2 md:hidden"></i>
+        <h1 class="text-left w-full left-[18%] max-[990px]:left-[20%] absolute font-semibold text-gray-600">DASHBOARD</h1>
+
+        <!--chat | notif | profile-->
+        <div class="flex justify-center items-center">
+
+			<!--messages-->
+			<a href="{% url 'chatbot' %}" id="message-button" class="bi bi-chat text-[1.2rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300  relative cursor-pointer z-[9999999]" title="messages">
+				<span id="message-indicator" class="bg-red-600 text-white hidden rounded-full px-1 text-[.7rem]"></span>
+			</a>
+
+			<!--notifications-->
+			<a href="{% url 'owner_notifications' %}" class="bi bi-bell text-[1.3rem] px-[.8rem] py-2 rounded-full hover:bg-gray-300 relative cursor-pointer z-[9999999]" title="notifications">
+				<span id="notification-count" class="bg-red-500 rounded-full text-[.7rem] text-white px-1 absolute right-[4px] top-[10%]"></span>
+			</a>
+			<!--end notifications-->
+
+			<!-- PROFILE -->
+			<div class="dropdown w-full text-right relative">
+				<button id="dropdown-btn" class="btn btn-secondary bg-transparent
+				 border-0 text-black" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+					<div class="w-[2.4rem] h-[2.4rem] rounded-[50%] shadow-md overflow-hidden"><img
+							class="w-full h-full hover:bg-gray-100" src="{{ profile }}" alt="user profile"></div>
+				</button>
+				<ul id="dropdown-menu" class="dropdown-menu hidden flex flex-col absolute right-0" aria-labelledby="dropdown-btn">
+					<li class="w-full">
+						<p class="w-full text-left dropdown-item" type="submit">
+							<!-- <i class="bi bi-person-circle"></i>
+							<!-- Button trigger modal -->
+							<!--<a class="" data-bs-toggle="modal" href="#exampleModalToggle" role="button">PROFILE</a> -->
+							<a href="{% url 'owner_profile' %}"><I class="bi bi-person-circle"></I> PROFILE</a>
+						</p>
+					</li>
+					<li>
+						<form class="dropdown-item" action="{% url 'adminLogout' %}" method="post">
+							{% csrf_token %}
+							<button class="w-full text-left" type="submit"><i
+									class="bi bi-box-arrow-right"></i> LOGOUT</button>
+						</form>
+					</li>
+				</ul>
+			</div>
+			<span>{{ user }}</span>
+		</div>
+    </div>
+
+	<!--content container-->
+	<div id="container"
+		class="w-full md:w-[73%] lg:w-[84.5%] max-[770px]:h-full h-[88%] bg-gray-50 absolute md:right-2 top-[4.3rem] md:top-[4.3rem] shadow-md rounded-md p-4 overflow-y-auto overflow-x-hidden ">
+
+		<div class="w-full md:flex md:justify-between items-center">
+			<div class="flex justify-center items-left gap-[.8rem] mb-3">
+				<img class="w-[5rem] h-[5rem] max-[770px]:w-[5rem] max-[770px]:h-[5rem] rounded-full shadow-md shadow-gray-400 hover:bg-gray-100"
+					src="{{ profile }}" alt="">
+				<div class="w-full">
+					<h1 class="w-full mb-3 text-[1.5rem] text-gray-700 max-[770px]:text-[1.5rem] font-semibold">Welcome, <span
+							id="user_name" class="text-[#193948]">{{ user }}</span>!</h1>
+					<p class="px-1 text-gray-500" style="transform: translateY(-20px);">Homeowner</p>
+				</div>
+			</div>
+
+			<!--Quick actions-->
+			<div>
+				<div class="flex gap-2 mb-2">
+					<!--Button trigger for request modal-->
+					<button
+						class="btn btn-primary w-full shadow-md shadow-gray-400 md:w-[180px] bg-[#193948] border-0 hover:opacity-[.9] hover:bg-[#193948] flex items-center"
+						data-bs-toggle="modal" data-bs-target="#staticBackdrop"><i
+							class="bi bi-tools w-[30%] text-sm"></i> <span
+							class="w-[60%] text-left overflow-hidden ellipsis text-sm">Request maintenance</span></button>
+					<button id="askBtn"
+						class="btn btn-primary text-sm w-full shadow-md shadow-gray-400 md:w-[180px] bg-[#178a2b8] border-0 hover:opacity-[.9]"
+						data-bs-toggle="modal" data-bs-target="#staticBackdrop1"><i
+							class="bi bi-chat-fill w-[30%] text-sm"></i> Chat asisstance</button>
+			</div>
+		</div>
+
+		</div>
+
+		
+		<hr class="mb-2">
+		{% for message in messages %}
+			<p id="pop-up-mess" class="alert alert-success absolute py-3 border-none bg-white shadow-md text-black"><i class="bi bi-check-circle-fill text-green-600"></i> {{ message }}</p>
+		{% endfor %}
+		<div class="grid grid-cols-3 gap-4 max-[770px]:grid-cols-1" style="border-left: 4px solid #193948; border-top-left-radius: 5px; border-bottom-left-radius: 5px;">
+			<div class="w-full py-2 bg-white shadow-md px-3 rounded-lg">
+				<h1 class="w-full text-[1rem] mb-2 font-semibold text-[#193948]">Property Overview</h1>
+				<div class="w-full flex items-center text-[2.5rem] gap-2">
+					<p class="text-[.8rem] text-gray-600">View and manage details about your property</p>
+					</h1> <!--Number of homeowners--> <i
+						class="bi bi-house-fill opacity-[.8] text-[#193948]"></i>
+				</div>
+				<hr class="text-black">
+				<a href="{% url 'property_detail' %}" class="text-[#193948]">See more <i
+						class="bi bi-arrow-right"></i></a>
+			</div>
+			<div class="w-full py-2 bg-white shadow-md px-3 rounded-lg" style="border-left: 4px solid #193948; border-top-left-radius: 5px; border-bottom-left-radius: 5px;">
+				<h1 class="w-full text-[1rem] mb-2 font-semibold text-[#193948]">Maintenance request</h1>
+				<div class="w-full flex items-center text-[2.5rem] gap-2">
+					<p class="text-[.8rem] text-gray-600">Submit and track maintenance request for your property.</p>
+					<h1 id="totalReq" class="font-semibold text-gray-600">{{ totalMaintenanceReq.count }}</h1>
+					<!--Number of secretaries--> <i class="bi bi-tools opacity-[.8] text-[#193948]"></i>
+				</div>
+				<hr class="text-black">
+				<a href="{% url 'request_maintenance_list' %}" class="text-gray-500">See more <i
+						class="bi bi-arrow-right"></i></a>
+			</div>
+			<div class="w-full py-2 bg-white shadow-md px-3 rounded-lg" style="border-left: 4px solid #193948; border-top-left-radius: 5px; border-bottom-left-radius: 5px;">
+				<h1 id="pendings" class="w-full text-[1rem] mb-2 font-semibold text-[#193948]">Household members
+				</h1>
+				<div class="w-full flex items-center text-[2.5rem] gap-2">
+					<p class="text-[.8rem] text-gray-600 ">View and manage details about your household members</p>
+					<h1 id="totalRes" class="font-semibold text-gray-600">{{ totalResidents.count }}</h1>
+					<!--Number of pending accounts--> <i class="bi bi-people-fill opacity-[.8] text-[#193948]"></i>
+				</div>
+				<hr class="text-black">
+				<a href="{% url 'household_members' %}" class="text-gray-500">See more <i
+						class="bi bi-arrow-right"></i></a>
+			</div>
+
+		<!--Modal form for request maintenance-->
+		<div class="modal fade z-[9999999]" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+			aria-labelledby="staticBackdropLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="staticBackdropLabel">Send a request</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+
+						<form action="{% url 'maintenance_request' %}" method="post">
+							{% csrf_token %}
+
+							<div class="w-full py-3 flex justify-center">
+								<img src="{% static 'users/req_maintenance.jpg' %}" class="w-[50%] h-[50%]"
+									alt="erquest maintenance image" srcset="">
+							</div>
+
+							<div class="mb-2">
+								<label for="description_of_issue" class="form-label">Description of issue</label>
+								<input class="form-control" list="description" id="description_of_issue" name="description_of_issue" required>
+								<datalist id="description">
+										<option value="leaky faucet"></option>
+										<option value="Clogged drain"></option>
+										<option value="Broken window"></option>
+										<option value="Power outage in room"></option>
+										<option value="Air conditioning not working"></option>
+										<option value="Heater malfunction"></option>
+										<option value="Door lock issue"></option>
+										<option value="Pest infestation"></option>
+										<option value="Water heater problem"></option>
+										<option value="Roof leak"></option>
+										<option value="Broken bed"></option>
+								</datalist>
+							</div>
+							<div class="mb-2">
+								<label for="type_of_issue" class="form-label">Type of issue</label>
+								<select class="form-control" name="type_of_issue" id="type_of_issue" required>
+									<option value="" selected>-----</option>
+									<option value="plumbing">Plumbing</option>
+									<option value="electrical">Electrical</option>
+									<option value="appliance">Appliance repair</option>
+									<option value="appliance">HVAC (Heating, Ventilation and Air Conditioning)</option>
+									<option value="appliance">Carpentry</option>
+									<option value="appliance">Pest control</option>
+									<option value="appliance">Landscaping</option>
+									<option value="others">Others</option>
+								</select>
+							</div>
+							<div class="mb-2">
+								<label for="location_of_issue" class="form-label">Location</label>
+								<input class="form-control" list="locations" name="location_of_issue" placeholder="Specify the area (e.g., bathroom, kitchen)" required>
+
+								<datalist id="locations">
+									<option value="Kitchen"></option>
+									<option value="Bathroom"></option>
+									<option value="Living room"></option>
+									<option value="Bedroom"></option>
+									<option value="Garage"></option>
+									<option value="Basement"></option>
+									<option value="Attic"></option>
+									<option value="Roof"></option>
+									<option value="Backyard"></option>
+									<option value="Front yard"></option>
+									<option value="Hallway"></option>
+									<option value="Laundry room"></option>
+									<option value="Comfort room / cr"></option>
+								</datalist>
+							</div>
+
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-primary">Send request</button>
+					</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<!--end request modal-->
+
+		<!--Modal for chatbot-->
+		<div class="modal fade" id="staticBackdrop1" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+			aria-labelledby="staticBackdropLabel" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title flex justify-between w-full px-3" id="staticBackdropLabel"><i
+								class="bi bi-chat-fill"> Ask a Question</i> <i id="sugBtn"
+								class="bi bi-lightbulb hover:font-bold cursor-pointer">Suggestions</i></h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div id="messageContainer"
+						class="modal-body no-scrollbar h-[200px] bg-gray-100 text-[.8rem] max-h-[450px] overflow-y-auto flex flex-col space-y-2">
+
+						<!--Messages-->
+
+						<!--End messages-->
+
+					</div>
+					<div class="modal-footer">
+						<div id="suggestions" class="h-[150px] w-full overflow-y-auto relative">
+							<div class="flex justify-between w-full px-3 bg-white py-2 sticky top-0 left-0">
+								<p>Suggestions</p> <i id="closeSugBtn" class="bi bi-x cursor-pointer"></i>
+							</div>
+							<button class="btn block btn-primary mb-2 rounded-[20px]">What is housing management system?</button>
+							<button class="btn block btn-primary mb-2 rounded-[20px]">Who can use the system?</button>
+							<button class="btn block btn-primary mb-2 rounded-[20px]">What assistance is available for homeowners?</button>
+							<button class="btn block btn-primary mb-2 rounded-[20px]">How can i report damage to my property?</button>
+							<button class="btn block btn-primary mb-2 rounded-[20px]">sugesstions</button>
+							<button class="btn block btn-primary mb-2 rounded-[20px]">sugesstions</button>
+						</div>
+						<div class="w-full">
+							<input class="w-[90%] h-[30px] outline-none pl-3" type="text" name="message" id="message"
+								placeholder="Ask your questions here..."><button id="sendBtn" type="submit"
+								class="btn btn-primary opacity-[.5] pointer-events-none transition duration-[2s ease]"><i
+									class="bi bi-send"></i></button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!--End Modal for chatbot-->
+
+		{% if message %}
+			<div id="success-mess" class="success-mess absolute rounded-md top-[-50px] px-4 py-2 z-[999999] bg-green-500 text-white shadow-md shadow-gray-600 "><i class="bi bi-check-circle-fill"></i> {{ message }}</div>
+		{% endif %}
+		</div>
+
+
+		<div class="w-full md:flex md:justify-center gap-3 mt-3">
+			<!--Recent activities table-->
+			<div class="w-full py-2 bg-white px-3 shadow-md rounded-lg mb-2">
+				<h1 class="text-sm text-gray-600 bg-white py-2 px- font-semibold">Recent activities:</h1>
+				{% if activities.count == 0 %}
+					<p class="w-full text-center text-[4rem] text-gray-400"><i class="bi bi-pencil-square"></i></p>
+					<p class="w-full text-center text-[1rem] text-gray-500">No recent activities</p>
+				{% else %}
+				<div class="overflow-x-auto max-h-[250px] overflow-y-auto hide-scrollbar">
+					<table class="min-w-full divide-y divide-gray-20">
+						<thead class="sticky top-0 bg-white">
+							<tr>
+								<th
+									class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									Activity</th>
+								<th
+									class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+									Date</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white divide-y divide-gray-200">
+							{% for act in activities %}
+							<tr>
+								<td class="px-4 py-3 whitespace-nowrap text-sm">{{ act.name_of_activity }}</td>
+								<td class="px-4 py-3 whitespace-nowrap text-sm">{{ act.date }}</td>
+							</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+				{% endif %}
+				<!--recent activities table end-->
+				</div>
+
+				<!--Events-->
+				<div class="w-full py-2 bg-white shadow-md px-3 rounded-lg">
+					<h1 class="text-sm text-gray-600 py-2 px-2 font-semibold">Community Events: {{ events.count }}</h1>
+					<div class="w-full px-3 mt-2 min-[770px]:mt-6 mb-2 max-h-[230px] overflow-y-auto">
+						{% if events.count == 0 %}
+							<p class="w-full text-center text-[4rem] text-gray-500 opacity-[.8]"><i class="bi bi-calendar-x"></i></p>
+							<p class="w-full text-center text-gray-500 px-3 text-sm">No events yet.</p>
+						{% else %}
+							{% for event in events %}
+							<a href="{% url 'owner_event_detail' event.pk %}" class="relative"><img
+									class="w-full h-full mb-" src="{{ event.image.url }}" alt="image event"> <span
+									class="absolute py-2 rounded-md text-white px-3 max-w-[85%] truncate"
+									style="transform: translate(-50%, -50%); left: 50%; top: 50%; background: rgba(0, 0, 0, .7);"><i
+										class="bi bi-calendar"></i> {{ event.event_name|title }}</span></a>
+							{% endfor %}
+						{% endif %}
+					</div>
+				</div>
+			</div>
+			<!--End events-->
+		</div>
+
+	</div>
+	<!--End container--> 
+
+	{% endblock content %}
+	{% block extra_js %}
+	<script src="{% static 'js/owner_preload.js' %}"></script>
+	<script src="{% static 'js/owner_dropdown_menu.js' %}"></script>
+	<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+	<script src="{% static 'js/response.js' %}"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+		integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+		crossorigin="anonymous"></script>
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var user = document.getElementById("user").innerText.trim();
+			if (user === 'None') {
+				location.href = "{% url 'main' %}";
+			}
+
+			const messageContainer = document.querySelector("#messageContainer")
+			const sendBtn = document.querySelector("#sendBtn")
+			let message = document.querySelector("#message")
+
+			message.addEventListener('input', (e) => {
+				if (message.value === "") {
+					disableSend()
+				} else {
+					enableSend()
+				}
+			})
+
+			function disableSend() {
+				sendBtn.style.opacity = '.5'
+				sendBtn.style.pointerEvents = 'none'
+			}
+
+			function enableSend() {
+				sendBtn.style.opacity = '1'
+				sendBtn.style.pointerEvents = 'all'
+			}
+
+			const user_name = document.querySelector("#user_name").innerText
+			const askBtn = document.querySelector("#askBtn").addEventListener('click', (e) => {
+				const sugBtn = document.querySelector("#sugBtn").addEventListener('click', (e) => {
+					suggestions.style.display = 'block'
+				})
+				const closeSugBtn = document.querySelector("#closeSugBtn").addEventListener('click', (e) => {
+					suggestions.style.display = 'none'
+				})
+
+				setTimeout(() => {
+					if (!messageContainer.innerText.includes(`Hello ${user_name}, how can i help you today? I'd love to hear your concerns or questions but for now I'm only capable of understanding English laguage.`)) {
+						welcomeMess = document.createElement('p')
+						welcomeText = document.createElement('p')
+						welcomeText.textContent = `Hello ${user_name}, how can i help you today? I'd love to hear your concerns or questions but for now I'm only capable of understanding English laguage.`
+						welcomeMess.appendChild(welcomeText)
+						welcomeText.classList.add('bg-gray-200')
+						welcomeText.classList.add('rounded-[15px]')
+						welcomeText.classList.add('py-2')
+						welcomeText.classList.add('px-3')
+						welcomeText.classList.add('max-w-[50%]')
+						messageContainer.appendChild(welcomeMess)
+					}
+				}, 1000)
+			})
+
+			sugButtons = document.querySelectorAll("#suggestions button")
+
+			sugButtons.forEach(btn => {
+				btn.addEventListener('click', (e) => {
+					message.value = btn.textContent
+					enableSend()
+				})
+			});
+
+			//send message
+			sendBtn.addEventListener('click', (e) => {
+				if (message.value.trim() != "") {
+					aiResponse = document.createElement('p')
+					aiResponseText = document.createElement('p')
+					aiResponseText.textContent = message.value
+					aiResponseText.classList.add('bg-blue-500')
+					aiResponseText.classList.add('text-white')
+					aiResponseText.classList.add('rounded-[15px]')
+					aiResponseText.classList.add('px-3')
+					aiResponseText.classList.add('py-2')
+					aiResponseText.classList.add('max-w-[50%]')
+					aiResponseText.classList.add('break-words')
+					aiResponse.classList.add('flex')
+					aiResponse.classList.add('items-start')
+					aiResponse.classList.add('justify-end')
+					aiResponse.appendChild(aiResponseText)
+					messageContainer.appendChild(aiResponse)
+
+					const userMess = document.querySelector("#message").value.toLowerCase().trim()
+					let reply = "sorry i didn't get you there, can you explain further? I'd love to hear your questions but for now I am only capable of understanding English language."
+
+					const words = userMess.split(/\s+/)
+
+					for (let key in responses) {
+						const keywords = key.toLowerCase().split(/\s+/)
+						if (keywords.some(keyword => words.includes(keyword))) {
+							reply = responses[key]
+							break;
+						}
+					}
+
+					//recieve response
+					setTimeout(() => {
+						let replyContainer = document.createElement('p')
+						let replyText = document.createElement('p')
+						replyText.classList.add('bg-gray-200')
+						replyText.classList.add('rounded-[15px]')
+						replyText.classList.add('px-3')
+						replyText.classList.add('py-2')
+						replyText.classList.add('max-w-[50%]')
+						replyText.classList.add('break-words')
+						replyContainer.classList.add('flex')
+						replyContainer.classList.add('items-start')
+						replyText.innerText = reply
+						replyContainer.appendChild(replyText)
+						messageContainer.appendChild(replyContainer)
+						scrollToBottom()
+					}, 1200)
+				}
+
+				disableSend()
+				scrollToBottom()
+				message.value = ''
+			})
+
+			function scrollToBottom() {
+				messageContainer.scroll({ top: messageContainer.scrollHeight, behavior: 'smooth' })
+			}
+
+		});
+
+		function hideMessage(){
+			xBtn = document.querySelector('#xBtn').addEventListener('click', (e) => {
+				mess = document.querySelector("#mess")
+				container = document.querySelector('#container').removeChild(mess)
+				location.href = "{% url 'owner_dashboard' %}"
+			})
+		}
+
+		// Store the IDs of notifications that have already been displayed
+		let displayedNotificationIds = new Set();
+
+		function fetchNotifications() {
+			$.ajax({
+				url: '{% url "get_notifications" %}',
+				method: 'GET',
+				success: function(data) {
+					const notificationsList = $('#notifications-list');
+					if(data.length != 0){
+                		$('#notification-count').text(data.length);
+            		}
+
+				},
+				error: function(jqXHR, textStatus, errorThrown) {
+					console.error('Error fetching notifications:', textStatus, errorThrown);
+				}
+			});
+		}
+
+		// Polling every 5 seconds
+		setInterval(fetchNotifications, 500);
+
+		//fetch new messages
+		$(document).ready(function() {
+    function fetchMessages() {
+        $.ajax({
+            url: '{% url "get_new_messages" %}',
+            method: 'GET',
+			success: function(data) {
+                if (data.length > 0) {
+                    $('#message-indicator').text(data.length); // Show the red dot indicator with the count
+                } else {
+                    $('#message-indicator').hide(); // Hide the red dot indicator
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error fetching messages:', textStatus, errorThrown);
+            }
+        });
+    }
+
+    // Polling every 5 seconds
+    setInterval(fetchMessages, 5000);
+
+    // Mark messages as read and navigate to messages page
+    $('#message-button').click(function() {
+        $.ajax({
+            url: '{% url "mark_messages_as_read" %}',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                if (data.status === 'ok') {
+                    $('#message-indicator').hide(); // Hide the red dot indicator
+                    window.location.href = '{% url "owner_messages" %}'; // Redirect to messages page
+                }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                console.error('Error marking messages as read:', textStatus, errorThrown);
+            }
+        });
+    });
+});
+	</script>
+	{% endblock %}
+</body>
+
+</html>
