@@ -15,12 +15,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
-    <script src="{% static 'js/map.js' %}"></script>
-    <script src="{% static 'js/preload.js' %}"></script>
-    <script src="{% static 'js/before_unload.js' %}"></script>
+    <script defer src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script defer src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <script defer src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script  src="{% static 'js/map.js' %}"></script>
+    <script defer src="{% static 'js/preload.js' %}"></script>
+    <script defer src="{% static 'js/before_unload.js' %}"></script>
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 </head>
 
@@ -59,7 +59,7 @@
             <!--User selection-->
             <div class="w-full min-[900px]:w-[55%] min-[900px]:h-full min-[900px]:pt-[4rem]">
                 <h1 class="w-full text-teal-500 text-[1rem] text-center md:translate-y-[3rem] mt-4 mb-4 px-3 md:mt-[4rem]">Select
-                    usertype</h1>
+                    Account Type</h1>
 
                 <div class="w-full flex justify-evenly gap-1 md:gap-4 md:translate-y-[3rem] items-center">
                     <div
@@ -119,7 +119,6 @@
         const mapContainer = document.getElementById('mapContainer');
         const closeMapBtn = document.getElementById('closeMapBtn');
         const mapMessage = document.getElementById('mapMessage');
-
         let selectedUserType = '';
 
         users.forEach(userElement => {
@@ -140,13 +139,13 @@
             } else if (selectedUserType === 'Admin') {
                 location.href = "{% url 'adminLogin' %}";
             } else {
-                conBtn.textContent = 'Please select usertype';
+                conBtn.textContent = 'Please select account type';
             }
         });
 
         mapBtn.addEventListener('click', () => {
             mapContainer.classList.remove('hidden');
-            initMap();
+            initMap()
         });
 
         closeMapBtn.addEventListener('click', () => {
@@ -154,14 +153,16 @@
         });
 
         function initMap() {
+
             if (document.getElementById('map').children.length > 0) return;
-
-            const map = L.map('map').setView([51.505, -0.09], 13);
-
+             //beta bayview homes location
+            const initialLat = 11.218445209146429;
+            const initialLng = 125.0241042673588;
+            const map = L.map('map').setView([initialLat, initialLng], 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
             }).addTo(map);
-
+            
             const geocoder = L.Control.Geocoder.nominatim();
             const control = L.Control.geocoder({
                 query: '',
@@ -184,24 +185,46 @@
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     const currentLocation = L.marker([lat, lng]).addTo(map).bindPopup('Your current location').openPopup();
+                   
+                    const betaBayviewHomes = L.marker([initialLat, initialLng]).addTo(map).bindPopup('Beta Bayview Homes').openPopup();
                     map.setView([lat, lng], 13);
 
-                    control.on('markgeocode', function(e) {
-                        const latlng = e.geocode.center;
-                        L.Routing.control({
-                            waypoints: [
-                                L.latLng(lat, lng),
-                                L.latLng(latlng.lat, latlng.lng)
-                            ],
-                            createMarker: function(i, wp) {
-                                return L.marker(wp.latLng).bindPopup(i === 0 ? 'Start' : 'End').openPopup();
-                            }
+                    L.Routing.control({
+                    waypoints: [
+                        L.latLng(lat, lng),             
+                        L.latLng(initialLat, initialLng) 
+                    ],
+                    createMarker: function(i, wp) {
+                        return L.marker(wp.latLng)
+                            .bindPopup(i === 0 ? 'Your location' : 'Beta Bayview Homes')
+                            .openPopup();
+                    },
+                    routeWhileDragging: true 
+                }).addTo(map);
+
+                control.on('markgeocode', function(e) {
+                    const latlng = e.geocode.center;
+                    L.Routing.control({
+                        waypoints: [
+                            L.latLng(lat, lng),
+                            L.latLng(latlng.lat, latlng.lng)
+                        ],
+                        createMarker: function(i, wp) {
+                            return L.marker(wp.latLng).bindPopup(i === 0 ? 'Start' : 'End').openPopup();
+                        }
                         }).addTo(map);
                     });
+                }, () => {
+                    L.marker([initialLat, initialLng]).addTo(map)
+                        .bindPopup('Beta Bayview Homes')
+                        .openPopup();
+
+                    map.setView([initialLat, initialLng], 13);
                 });
             } else {
                 alert('Geolocation is not supported by this browser.');
             }
+                 
         }
 
         closeMapBtn.addEventListener('click', () => {

@@ -28,7 +28,15 @@ def secretary_dashboard(request):
     secretary = Secretary.objects.get(user=request.user)
     profile = secretary.profile_picture.url
 
-    return render(request, 'secretary_dashboard.html', {'totalPendings':totalPendings, 'maintenances':maintenances, 'events':events, 'totalProperties':totalProperties, 'totalHomeowners':totalHomeowners, 'occupied_properties':occupied_properties, 'profile':profile, 'message':message})
+    return render(request, 'secretary_dashboard.html', 
+                  {'totalPendings':totalPendings, 
+                   'maintenances':maintenances, 
+                   'events':events, 
+                   'totalProperties':totalProperties, 
+                   'totalHomeowners':totalHomeowners, 
+                   'occupied_properties':occupied_properties, 
+                   'profile':profile, 
+                   'message':message})
 
 @login_required
 def sec_homeowners(request):
