@@ -5,3 +5,4 @@ db.sqlite3
 node_modules
 dynamic-cooler-434604-i2-8379a3424f71.json
 package-lock.json
+venv
